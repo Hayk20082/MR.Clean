@@ -6,7 +6,6 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, models, transforms
 import os
 
-# --- 1. Параметры ---
 DATA_DIR = r'C:\Users\hayk\Downloads\ai_proj\data'
 MODEL_SAVE_DIR = r'C:\Users\hayk\Downloads\ai_proj\models'
 os.makedirs(MODEL_SAVE_DIR, exist_ok=True)
@@ -18,55 +17,32 @@ EPOCHS = 100
 NUM_CLASSES = 4
 LEARNING_RATE = 0.0001
 
-EARLY_STOP_DELTA = 0.0001    # если loss меняется меньше этого → стоп
-EARLY_STOP_PATIENCE = 25     # сколько эпох терпеть
+EARLY_STOP_DELTA = 0.0001
+EARLY_STOP_PATIENCE = 25
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Используемое устройство: {device}")
-# --- 2. DataLoader (С ОБНОВЛЕННЫМИ АУГМЕНТАЦИЯМИ) ---
+
 data_transforms = {
     'train': transforms.Compose([
         transforms.Resize((IMG_HEIGHT, IMG_WIDTH)),
-
-        # --- Геометрические аугментации ---
         transforms.RandomRotation(20),
         transforms.RandomAffine(degrees=0, translate=(0.2, 0.2), shear=0.2, scale=(0.8, 1.2)),
         transforms.RandomHorizontalFlip(),
-
-        # --- Аугментации цвета и стиля (Ваш текущий + новые) ---
-
-        # Случайно изменяем яркость, контраст, насыщенность и оттенок
-        # Ваши текущие настройки (0.3, 0.3, 0.3, 0.1) уже достаточно сильные
         transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.1),
-
-        # С некоторой вероятностью (p=0.1) превращаем изображение в Ч/Б
         transforms.RandomGrayscale(p=0.1),
-
-        # Добавляем легкое Гауссово размытие
         transforms.GaussianBlur(kernel_size=(3, 7), sigma=(0.1, 2.0)),
-
-        # --- ДОБАВЛЕННЫЕ (опционально, но полезно) ---
-
-        # "Постеризация": уменьшает количество бит на цветовой канал,
-        # что "огрубляет" цвета и заставляет модель не цепляться за мелкие цветовые детали
         transforms.RandomPosterize(bits=4, p=0.1),
-
-        # "Соляризация": инвертирует все значения пикселей выше порога
-        # Это очень "неестественная" аугментация, которая ломает привычные паттерны
         transforms.RandomSolarize(threshold=192.0, p=0.1),
-        # --- Конец добавленных ---
-
-        transforms.ToTensor(),  # Преобразование в тензор
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Нормализация
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ]),
     'val': transforms.Compose([
-        # ... (валидационный сет остается без изменений) ...
         transforms.Resize((IMG_HEIGHT, IMG_WIDTH)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
 }
-#
 
 image_datasets = {
     'train': datasets.ImageFolder(os.path.join(DATA_DIR, 'train'), transform=data_transforms['train']),
@@ -79,7 +55,7 @@ dataloaders = {
 }
 
 dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
-# --- 3. Модель ---
+
 class CustomVGG16(nn.Module):
     def __init__(self, num_classes):
         super(CustomVGG16, self).__init__()
@@ -101,10 +77,8 @@ class CustomVGG16(nn.Module):
         x = self.classifier(x)
         return x
 
-
 model = CustomVGG16(NUM_CLASSES).to(device)
 
-# --- 4. Loss и оптимизатор ---
 def categorical_crossentropy(outputs, targets_onehot):
     log_probs = torch.log_softmax(outputs, dim=1)
     loss = -(targets_onehot * log_probs).sum(dim=1).mean()
@@ -112,7 +86,6 @@ def categorical_crossentropy(outputs, targets_onehot):
 
 optimizer = optim.Adam(model.classifier.parameters(), lr=LEARNING_RATE)
 
-# --- 5. Обучение ---
 best_val_loss = float("inf")
 epochs_no_improve = 0
 
@@ -160,7 +133,6 @@ for epoch in range(EPOCHS):
     epoch_time = time.time() - epoch_start
     print(f"⏱ Время эпохи: {epoch_time:.2f} сек")
 
-    # --- Early stopping ---
     if history['val_loss'] + EARLY_STOP_DELTA < best_val_loss:
         print("🔥 Новая лучшая модель (по loss)!")
         best_val_loss = history['val_loss']
@@ -177,7 +149,6 @@ for epoch in range(EPOCHS):
             print("\n🛑 Early Stopping: обучение остановлено!")
             break
 
-# сохраняем финальную
 torch.save(model.state_dict(), os.path.join(MODEL_SAVE_DIR, "last_epoch.pth"))
 print("\n💾 Сохранено: last_epoch.pth")
 print("Обучение завершено.")

@@ -9,19 +9,12 @@ import numpy as np
 import os
 import argparse
 
-# ---------------------------
-# Config
-# ---------------------------
 DEFAULT_MODEL_PATH = r"C:\Users\hayk\Downloads\ai_proj\models\best_model_angun_agment.pth"
 CLASS_NAMES = ['glass', 'metal', 'paper', 'plastic']
 IMG_SIZE = (224, 224)
 CAMERA_INDEX = 0
 USE_GPU = True
 
-
-# ---------------------------
-# Model definition
-# ---------------------------
 class CustomVGG16(nn.Module):
     def __init__(self, num_classes):
         super().__init__()
@@ -43,10 +36,6 @@ class CustomVGG16(nn.Module):
         x = self.classifier(x)
         return x
 
-
-# ---------------------------
-# Load model
-# ---------------------------
 def load_model(path: str, num_classes: int, device):
     model = CustomVGG16(num_classes=num_classes)
     model.to(device)
@@ -56,15 +45,12 @@ def load_model(path: str, num_classes: int, device):
     print(f"✅ Loaded model: {path}")
     return model
 
-
-# Preprocessing
 preprocess = transforms.Compose([
     transforms.Resize(IMG_SIZE),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406],
                          std=[0.229, 0.224, 0.225])
 ])
-
 
 def predict_frame(model, device, pil_image):
     input_tensor = preprocess(pil_image).unsqueeze(0).to(device)
@@ -75,17 +61,12 @@ def predict_frame(model, device, pil_image):
     conf = float(probs[idx])
     return idx, conf, probs
 
-
-# ---------------------------
-# Main realtime loop
-# ---------------------------
 def main(model_path, source, class_names, use_gpu=True):
     device = torch.device("cuda" if (use_gpu and torch.cuda.is_available()) else "cpu")
     print("Using:", device)
 
     model = load_model(model_path, len(class_names), device)
 
-    # Camera
     is_file = os.path.isfile(source)
     cap = cv2.VideoCapture(source if is_file else int(source))
 
@@ -93,14 +74,11 @@ def main(model_path, source, class_names, use_gpu=True):
         print("❌ Cannot open camera:", source)
         return
 
-    # Improve exposure for stable recognition
     cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
     cap.set(cv2.CAP_PROP_EXPOSURE, -4)
 
-    # Blur kernel
     BLUR_KERNEL_SIZE = (31, 31)
 
-    # FPS
     fps = 0.0
     prev_time = time.time()
 
@@ -112,27 +90,18 @@ def main(model_path, source, class_names, use_gpu=True):
 
         h, w = frame.shape[:2]
 
-        # ---------------------------
-        # 1. COMPUTE CENTRAL CROP (50% of frame)
-        # ---------------------------
-        box_size = int(h * 0.50)            # strongest accuracy
+        box_size = int(h * 0.50)
         y1 = (h - box_size) // 2
         y2 = y1 + box_size
         x1 = (w - box_size) // 2
         x2 = x1 + box_size
 
-        crop = frame[y1:y2, x1:x2]          # region used for prediction
+        crop = frame[y1:y2, x1:x2]
 
-        # ---------------------------
-        # 2. VISUAL BLUR (does NOT affect prediction)
-        # ---------------------------
         display_frame = cv2.GaussianBlur(frame, BLUR_KERNEL_SIZE, 0)
         display_frame[y1:y2, x1:x2] = frame[y1:y2, x1:x2]
         cv2.rectangle(display_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
 
-        # ---------------------------
-        # 3. PREDICT using ONLY central crop
-        # ---------------------------
         rgb = cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)
         pil = Image.fromarray(rgb)
 
@@ -140,9 +109,6 @@ def main(model_path, source, class_names, use_gpu=True):
         pred_idx, conf, probs = predict_frame(model, device, pil)
         t1 = time.time()
 
-        # ---------------------------
-        # 4. Text overlays
-        # ---------------------------
         label = f"{class_names[pred_idx]}: {conf * 100:.1f}%"
         inf_time_ms = (t1 - t0) * 1000
 
@@ -168,9 +134,6 @@ def main(model_path, source, class_names, use_gpu=True):
         cv2.putText(display_frame, info, (10, 55),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 0), 2)
 
-        # ---------------------------
-        # 5. Show final frame
-        # ---------------------------
         cv2.imshow("Garbage Detector", display_frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -179,10 +142,6 @@ def main(model_path, source, class_names, use_gpu=True):
     cap.release()
     cv2.destroyAllWindows()
 
-
-# ---------------------------
-# CLI
-# ---------------------------
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default=DEFAULT_MODEL_PATH)
