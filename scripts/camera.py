@@ -9,7 +9,7 @@ import numpy as np
 import os
 import argparse
 
-DEFAULT_MODEL_PATH = r"C:\Users\hayk\Downloads\ai_proj\models\best_model_angun_agment.pth"
+DEFAULT_MODEL_PATH = r"C:\Users\hayk\Downloads\MR.Clean\models\best_model_angun_agment.pth"
 CLASS_NAMES = ['glass', 'metal', 'paper', 'plastic']
 IMG_SIZE = (224, 224)
 CAMERA_INDEX = 0
