@@ -6,8 +6,8 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, models, transforms
 import os
 
-DATA_DIR = r'C:\Users\hayk\Downloads\ai_proj\data'
-MODEL_SAVE_DIR = r'C:\Users\hayk\Downloads\ai_proj\models'
+DATA_DIR = r'C:\Users\hayk\Downloads\MR.Clean\data'
+MODEL_SAVE_DIR = r'C:\Users\hayk\Downloads\MR.Clean\models'
 os.makedirs(MODEL_SAVE_DIR, exist_ok=True)
 
 IMG_HEIGHT = 224
