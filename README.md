@@ -41,6 +41,11 @@ Shows live prediction (Plastic, Glass, Paper, Metal)
 Prints class + confidence score every frame
 Press Q to quit
 ```
+
+## Model Performance
+![Stats](stats.jpg)
+
+### Confusion Matrix
 ![Confusion Matrix](conf_matrix.jpg)
 
 
