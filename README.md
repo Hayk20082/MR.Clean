@@ -20,3 +20,39 @@ Reduction in the amount of unsorted waste.
 Increasing the level of recycling and environmental awareness.
 Creation of a convenient and modern waste sorting method.
 The possibility of integrating the system in schools, offices and public spaces.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Confusion Matrix
+
+![Confusion Matrix](/conf_matrix.jpg)
+
+
+
+
+
+
