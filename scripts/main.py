@@ -21,7 +21,7 @@ EARLY_STOP_DELTA = 0.0001
 EARLY_STOP_PATIENCE = 25
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"Используемое устройство: {device}")
+print(f"Using device: {device}")
 
 data_transforms = {
     'train': transforms.Compose([
@@ -35,23 +35,31 @@ data_transforms = {
         transforms.RandomPosterize(bits=4, p=0.1),
         transforms.RandomSolarize(threshold=192.0, p=0.1),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                             std=[0.229, 0.224, 0.225])
     ]),
     'val': transforms.Compose([
         transforms.Resize((IMG_HEIGHT, IMG_WIDTH)),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                             std=[0.229, 0.224, 0.225])
     ])
 }
 
 image_datasets = {
-    'train': datasets.ImageFolder(os.path.join(DATA_DIR, 'train'), transform=data_transforms['train']),
-    'val': datasets.ImageFolder(os.path.join(DATA_DIR, 'val'), transform=data_transforms['val'])
+    'train': datasets.ImageFolder(os.path.join(DATA_DIR, 'train'),
+                                  transform=data_transforms['train']),
+    'val': datasets.ImageFolder(os.path.join(DATA_DIR, 'val'),
+                                transform=data_transforms['val'])
 }
 
 dataloaders = {
-    'train': DataLoader(image_datasets['train'], batch_size=BATCH_SIZE, shuffle=True),
-    'val': DataLoader(image_datasets['val'], batch_size=BATCH_SIZE, shuffle=False)
+    'train': DataLoader(image_datasets['train'],
+                        batch_size=BATCH_SIZE,
+                        shuffle=True),
+    'val': DataLoader(image_datasets['val'],
+                      batch_size=BATCH_SIZE,
+                      shuffle=False)
 }
 
 dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
@@ -59,7 +67,9 @@ dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
 class CustomVGG16(nn.Module):
     def __init__(self, num_classes):
         super(CustomVGG16, self).__init__()
-        self.features = models.vgg16(weights=models.VGG16_Weights.IMAGENET1K_V1).features
+        self.features = models.vgg16(
+            weights=models.VGG16_Weights.IMAGENET1K_V1
+        ).features
         for param in self.features.parameters():
             param.requires_grad = False
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
@@ -84,14 +94,15 @@ def categorical_crossentropy(outputs, targets_onehot):
     loss = -(targets_onehot * log_probs).sum(dim=1).mean()
     return loss
 
-optimizer = optim.Adam(model.classifier.parameters(), lr=LEARNING_RATE)
+optimizer = optim.Adam(model.classifier.parameters(),
+                       lr=LEARNING_RATE)
 
 best_val_loss = float("inf")
 epochs_no_improve = 0
 
 for epoch in range(EPOCHS):
     epoch_start = time.time()
-    print(f"\nЭпоха {epoch+1}/{EPOCHS}")
+    print(f"\nEpoch {epoch + 1}/{EPOCHS}")
     print("-" * 20)
 
     history = {}
@@ -106,13 +117,18 @@ for epoch in range(EPOCHS):
         running_corrects = 0
 
         for inputs, labels in dataloaders[phase]:
-            inputs, labels = inputs.to(device), labels.to(device)
-            labels_onehot = torch.nn.functional.one_hot(labels, NUM_CLASSES).float().to(device)
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+            labels_onehot = torch.nn.functional.one_hot(
+                labels, NUM_CLASSES
+            ).float().to(device)
 
             optimizer.zero_grad()
+
             with torch.set_grad_enabled(phase == 'train'):
                 outputs = model(inputs)
-                loss = categorical_crossentropy(outputs, labels_onehot)
+                loss = categorical_crossentropy(outputs,
+                                                labels_onehot)
                 _, preds = torch.max(outputs, 1)
 
                 if phase == 'train':
@@ -131,24 +147,23 @@ for epoch in range(EPOCHS):
         print(f"{phase}: Loss={epoch_loss:.4f} | Acc={epoch_acc:.4f}")
 
     epoch_time = time.time() - epoch_start
-    print(f"⏱ Время эпохи: {epoch_time:.2f} сек")
+    print(f"Epoch time: {epoch_time:.2f} sec")
 
     if history['val_loss'] + EARLY_STOP_DELTA < best_val_loss:
-        print("🔥 Новая лучшая модель (по loss)!")
+        print("New best model (by validation loss)")
         best_val_loss = history['val_loss']
         epochs_no_improve = 0
-
-        torch.save(model.state_dict(), os.path.join(MODEL_SAVE_DIR, "best_model.pth"))
-        print("💾 Сохранено: best_model.pth")
-
+        torch.save(model.state_dict(),
+                   os.path.join(MODEL_SAVE_DIR, "best_model.pth"))
+        print("Saved: best_model.pth")
     else:
         epochs_no_improve += 1
-        print(f"⚠️ Нет улучшения ({epochs_no_improve}/{EARLY_STOP_PATIENCE})")
-
+        print(f"No improvement ({epochs_no_improve}/{EARLY_STOP_PATIENCE})")
         if epochs_no_improve >= EARLY_STOP_PATIENCE:
-            print("\n🛑 Early Stopping: обучение остановлено!")
+            print("Early stopping triggered")
             break
 
-torch.save(model.state_dict(), os.path.join(MODEL_SAVE_DIR, "last_epoch.pth"))
-print("\n💾 Сохранено: last_epoch.pth")
-print("Обучение завершено.")
+torch.save(model.state_dict(),
+           os.path.join(MODEL_SAVE_DIR, "last_epoch.pth"))
+print("Saved: last_epoch.pth")
+print("Training completed")
