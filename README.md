@@ -3,14 +3,14 @@
 An AI-powered system that automatically recognizes and classifies household waste using computer vision.  
 The system helps reduce human error in waste disposal and supports eco-friendly recycling.
 
-## 🚀 How to Run and Use
+## How to Run and Use
 
 ### 1. Clone the repository
 ```bash
 git clone https://github.com/Hayk20082/MR.Clean.git
 cd MR.Clean
 ```
-###2. Create virtual environment and install dependencies
+### 2. Create virtual environment and install dependencies
 ```bash
 python -m venv venv
 
