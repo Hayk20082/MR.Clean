@@ -9,9 +9,9 @@ The system helps reduce human error in waste disposal and supports eco-friendly 
 ```bash
 git clone https://github.com/Hayk20082/MR.Clean.git
 cd MR.Clean
-
-### 2. Create virtual environment and install dependencies
-
+```
+###2. Create virtual environment and install dependencies
+```bash
 python -m venv venv
 
 # Windows
@@ -22,9 +22,9 @@ source venv/bin/activate
 
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 pip install opencv-python pillow numpy tqdm
-
+```
 ### 3. Project structure
-
+```bash
 MR.Clean/
 ├── models/           # trained models (.pth)
 ├── scripts/
@@ -32,16 +32,16 @@ MR.Clean/
 │   └── camera.py     # real-time camera inference on PC
 ├── conf_matrix.jpg
 └── README.md
-
+```
 ### 4. How to use
-
+```bash
 python scripts/camera.py
 Opens your default webcam
 Shows live prediction (Plastic, Glass, Paper, Metal)
 Prints class + confidence score every frame
 Press Q to quit
-
-![Confusion Matrix](assets/conf_matrix.jpg)
+```
+![Confusion Matrix](conf_matrix.jpg)
 
 
 
