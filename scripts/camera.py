@@ -42,7 +42,7 @@ def load_model(path: str, num_classes: int, device):
     state = torch.load(path, map_location=device)
     model.load_state_dict(state)
     model.eval()
-    print(f"✅ Loaded model: {path}")
+    print(f"Loaded model: {path}")
     return model
 
 preprocess = transforms.Compose([
@@ -71,7 +71,7 @@ def main(model_path, source, class_names, use_gpu=True):
     cap = cv2.VideoCapture(source if is_file else int(source))
 
     if not cap.isOpened():
-        print("❌ Cannot open camera:", source)
+        print("Cannot open camera:", source)
         return
 
     cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
